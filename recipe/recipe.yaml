@@ -16,9 +16,9 @@ build:
       CARGO_PROFILE_RELEASE_LTO: fat
       CARGO_PROFILE_RELEASE_STRIP: symbols
     content:
-      - cargo auditable install --locked --no-track --bins --root="$PREFIX" --path=.
+      - cargo auditable install --path=. --root="$PREFIX" --no-track --locked --bins
       # copy manpage and generate shell completions
-      - mkdir -p "$PREFIX/share/man/man1" "$PREFIX"/share/bash-completion/completions "$PREFIX"/share/fish/vendor_completions.d "$PREFIX"/share/zsh/site-functions
+      - mkdir -p "$PREFIX"/share/man/man1 "$PREFIX"/share/bash-completion/completions "$PREFIX"/share/fish/vendor_completions.d "$PREFIX"/share/zsh/site-functions
       - cp -r target/*/release/build/handlr-regex-*/out/manual/man1/* "$PREFIX"/share/man/man1/
       - COMPLETE=bash "$PREFIX"/bin/handlr > "$PREFIX"/share/bash-completion/completions/handlr
       - COMPLETE=fish "$PREFIX"/bin/handlr > "$PREFIX"/share/fish/vendor_completions.d/handlr.fish
@@ -44,16 +44,7 @@ tests:
       bin:
         - handlr
       files:
-        - share/man/man1/handlr.1
-        - share/man/man1/handlr-add.1
-        - share/man/man1/handlr-get.1
-        - share/man/man1/handlr-launch.1
-        - share/man/man1/handlr-list.1
-        - share/man/man1/handlr-mime.1
-        - share/man/man1/handlr-open.1
-        - share/man/man1/handlr-remove.1
-        - share/man/man1/handlr-set.1
-        - share/man/man1/handlr-unset.1
+        - share/man/man1/handlr*.1
         - share/bash-completion/completions/handlr
         - share/fish/vendor_completions.d/handlr.fish
         - share/zsh/site-functions/_handlr
