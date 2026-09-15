@@ -15,15 +15,23 @@ build:
     env:
       CARGO_PROFILE_RELEASE_LTO: fat
       CARGO_PROFILE_RELEASE_STRIP: symbols
+    interpreter: nu
     content:
-      - cargo auditable install --path=. --root="$PREFIX" --no-track --locked --bins
-      # copy manpage and generate shell completions
-      - mkdir -p "$PREFIX"/share/man/man1 "$PREFIX"/share/bash-completion/completions "$PREFIX"/share/fish/vendor_completions.d "$PREFIX"/share/zsh/site-functions
-      - cp -r target/*/release/build/handlr-regex-*/out/manual/man1/* "$PREFIX"/share/man/man1/
-      - COMPLETE=bash "$PREFIX"/bin/handlr > "$PREFIX"/share/bash-completion/completions/handlr
-      - COMPLETE=fish "$PREFIX"/bin/handlr > "$PREFIX"/share/fish/vendor_completions.d/handlr.fish
-      - COMPLETE=zsh  "$PREFIX"/bin/handlr > "$PREFIX"/share/zsh/site-functions/_handlr
-      - cargo-bundle-licenses --format=yaml --output=./THIRDPARTY.yml
+      - let prefix = $env.LIBRARY_PREFIX? | default $env.PREFIX
+      # build main app and generate license data
+      - cargo auditable install --path=. --root=($prefix) --no-track --locked --bins
+      - cargo-bundle-licenses --format=yaml --output=THIRDPARTY.yml
+      # copy manpage
+      - mkdir ($prefix)/share/man/man1
+      - cp --recursive target/*/release/build/handlr-regex-*/out/manual/man1/* ($prefix)/share/man/man1/
+      # generate shell completions
+      - if: build_platform == host_platform
+        then:
+          - mkdir ($prefix)/share/bash-completion/completions ($prefix)/share/fish/vendor_completions.d ($prefix)/share/zsh/site-functions
+          - let bin = ($prefix)/bin/handlr
+          - COMPLETE=bash ^$bin completion bash | save ($prefix)/share/bash-completion/completions/handlr
+          - COMPLETE=fish ^$bin completion fish | save ($prefix)/share/fish/vendor_completions.d/handlr.fish
+          - COMPLETE=zsh  ^$bin completion zsh  | save ($prefix)/share/zsh/site-functions/_handlr
   skip:
     - osx
     - win
@@ -35,6 +43,7 @@ requirements:
     - ${{ compiler('rust') }}
     - cargo-auditable
     - cargo-bundle-licenses
+    - nushell
 
 tests:
   - script:
@@ -44,10 +53,12 @@ tests:
       bin:
         - handlr
       files:
-        - share/man/man1/handlr*.1
-        - share/bash-completion/completions/handlr
-        - share/fish/vendor_completions.d/handlr.fish
-        - share/zsh/site-functions/_handlr
+        - if: unix and build_platform == host_platform
+          then:
+            - share/man/man1/handlr*.1
+            - share/bash-completion/completions/handlr
+            - share/fish/vendor_completions.d/handlr.fish
+            - share/zsh/site-functions/_handlr
       strict: true
 
 about:
